@@ -340,11 +340,6 @@ func updatePools(g *gocui.Gui) {
 		case <-handler.DonePoolFeed:
 			return
 		case <-ticker.C:
-			/* out, err := g.View("pools")
-			if err != nil {
-				continue
-			}
-			fmt.Fprintln(out, <-poolFeed) */
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("pools")
 				if err != nil {
