@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/jon4hz/emergenyWithdrawer/internal/helper/regex"
+	"github.com/jon4hz/emergenyWithdrawer/internal/util"
 )
 
 func InputEndpoint() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		vbuf := v.ViewBuffer()
 
-		if !regex.URLMatch.MatchString(vbuf) {
+		if !util.URLMatch.MatchString(vbuf) {
 
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("endpoint")

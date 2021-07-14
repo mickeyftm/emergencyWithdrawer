@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/awesome-gocui/gocui"
+	"github.com/jon4hz/emergenyWithdrawer/internal/client"
 	"github.com/jon4hz/emergenyWithdrawer/internal/config"
 )
 
@@ -48,6 +52,17 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		view := v.Name()
 
+		g.Update(func(g *gocui.Gui) error {
+			v, err := g.View("pools")
+			if err != nil {
+				return err
+			}
+			fmt.Fprintln(v, view)
+			return nil
+		})
+
+		var first bool
+
 		cfg, err := config.GetActiveConf()
 		if err != nil {
 			if err.Error() != config.ErrNoActiveConf.Error() {
@@ -64,9 +79,10 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				// TODO replace return err with write err to log, if return err hits here the code panics
 				return err
 			}
+			first = true
 		}
 
-		if cfg.Name != view {
+		if cfg.Name != view || first {
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View(cfg.Name)
 				if err != nil {
@@ -83,10 +99,45 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				return nil
 			})
 
+			g.Update(func(g *gocui.Gui) error {
+				v, err := g.View("gaslimit")
+				if err != nil {
+					return err
+				}
+
+				v.Clear()
+				fmt.Fprint(v, cfg.GasLimit)
+
+				return nil
+			})
+
 			err := config.SetActiveConf(view)
 			if err != nil {
 				return err
 			}
+
+			err = client.Load(view)
+			if err != nil {
+				return err
+			}
+
+			go func(g *gocui.Gui, v *gocui.View) {
+				gas, err := client.Client.SuggestGasPrice(context.TODO())
+				if err != nil {
+					return
+				}
+				g.Update(func(g *gocui.Gui) error {
+					v, err := g.View("gasprice")
+					if err != nil {
+						return err
+					}
+
+					v.Clear()
+					fmt.Fprint(v, gas)
+
+					return nil
+				})
+			}(g, v)
 
 			return nil
 		}
