@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/awesome-gocui/gocui"
-	"github.com/gdamore/tcell/v2"
 	"github.com/jon4hz/emergenyWithdrawer/internal/helper/regex"
 )
 
@@ -14,13 +13,12 @@ func InputEndpoint() func(g *gocui.Gui, v *gocui.View) error {
 
 		if !regex.URLMatch.MatchString(vbuf) {
 
-			fmt.Println("no match")
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("endpoint")
 				if err != nil {
 					return err
 				}
-				v.FrameColor = gocui.Attribute(tcell.ColorRed)
+				v.FrameColor = gocui.ColorRed
 				return nil
 			})
 		}
