@@ -262,6 +262,10 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 
+		if len(w.opts.frameRunes) > 0 {
+			v.FrameRunes = w.opts.frameRunes
+		}
+
 		v.FrameColor = w.opts.frameColor
 		v.FgColor = w.opts.fgColor
 
@@ -269,6 +273,9 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(w.name, gocui.MouseLeft, gocui.ModNone, w.handler); err != nil {
 			return err
 		}
 		text := w.label
@@ -340,14 +347,14 @@ func updatePools(g *gocui.Gui) {
 		case <-handler.DonePoolFeed:
 			return
 		case <-ticker.C:
-			g.Update(func(g *gocui.Gui) error {
+			/* g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("pools")
 				if err != nil {
 					return err
 				}
 				fmt.Fprintln(v, i)
 				return nil
-			})
+			}) */
 			i++
 
 			if i == 10 {
