@@ -140,6 +140,24 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 			}(g, v)
 
 			return nil
+		} else if cfg.Name == view {
+			go func(g *gocui.Gui, v *gocui.View) {
+				gas, err := client.Client.SuggestGasPrice(context.TODO())
+				if err != nil {
+					return
+				}
+				g.Update(func(g *gocui.Gui) error {
+					v, err := g.View("gasprice")
+					if err != nil {
+						return err
+					}
+
+					v.Clear()
+					fmt.Fprint(v, gas)
+
+					return nil
+				})
+			}(g, v)
 		}
 
 		return nil
