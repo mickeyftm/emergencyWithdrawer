@@ -170,11 +170,7 @@ func setLayout(g *gocui.Gui) {
 		"pools",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, maxY := g.Size()
-			y1 := maxY/2 - 1
-			if y1 < 11 {
-				y1 = 11
-			}
-			return maxX / 3, 3, 2*(maxX/3) - 1, y1
+			return maxX / 3, 3, 2*(maxX/3) - 1, maxY/2 - 1
 		},
 	)
 
