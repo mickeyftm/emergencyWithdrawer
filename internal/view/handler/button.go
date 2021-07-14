@@ -83,8 +83,20 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 		}
 
 		if cfg.Name != view || first {
+
+			prevNet := cfg.Name
+
+			err := config.SetActiveConf(view)
+			if err != nil {
+				return err
+			}
+			cfg, err = config.GetActiveConf()
+			if err != nil {
+				return err
+			}
+
 			g.Update(func(g *gocui.Gui) error {
-				v, err := g.View(cfg.Name)
+				v, err := g.View(prevNet)
 				if err != nil {
 					return err
 				}
@@ -94,6 +106,7 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				if err != nil {
 					return err
 				}
+
 				v.FrameRunes = []rune{'═', '║', '╔', '╗', '╚', '╝'}
 
 				return nil
@@ -108,13 +121,16 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				v.Clear()
 				fmt.Fprint(v, cfg.GasLimit)
 
+				v, err = g.View("endpoint")
+				if err != nil {
+					return err
+				}
+
+				v.Clear()
+				fmt.Fprint(v, cfg.Endpoint)
+
 				return nil
 			})
-
-			err := config.SetActiveConf(view)
-			if err != nil {
-				return err
-			}
 
 			err = client.Load(view)
 			if err != nil {
