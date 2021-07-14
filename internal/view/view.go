@@ -12,8 +12,7 @@ import (
 )
 
 var (
-	donePoolFeed = make(chan struct{})
-	wg           sync.WaitGroup
+	wg sync.WaitGroup
 )
 
 func New() {
@@ -51,33 +50,105 @@ func setLayout(g *gocui.Gui) {
 		},
 		"ETH",
 		&ButtonWidgetOpts{
-			FrameColor: gocui.ColorBlue,
+			frameColor: gocui.ColorBlue,
 		},
 		handler.SetConf(),
 	)
+
 	bscButton := NewButtonWidget(
 		"bsc",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, _ := g.Size()
-			return (maxX / 18) + 1, 0, (maxX / 9) - 1, 2
+			return (maxX / 18), 0, 2*(maxX/18) - 1, 2
 		},
 		"BSC",
 		&ButtonWidgetOpts{
-			FrameColor: gocui.ColorYellow,
+			frameColor: gocui.ColorYellow,
 		},
 		handler.SetConf(),
 	)
+
 	maticButton := NewButtonWidget(
 		"matic",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, _ := g.Size()
-			return (maxX / 9) + 1, 0, 3*(maxX/18) + 1, 2
+			return 2 * (maxX / 18), 0, 3*(maxX/18) - 1, 2
 		},
 		"MATIC",
 		&ButtonWidgetOpts{
-			FrameColor: gocui.GetColor("#8A2BE2"),
+			frameColor: gocui.ColorCyan,
 		},
 		handler.SetConf(),
+	)
+
+	ftmButton := NewButtonWidget(
+		"ftm",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 3 * (maxX / 18), 0, 4*(maxX/18) - 1, 2
+		},
+		"FTM",
+		&ButtonWidgetOpts{
+			frameColor: gocui.ColorBlue,
+		},
+		handler.SetConf(),
+	)
+
+	kccButton := NewButtonWidget(
+		"kcc",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 4 * (maxX / 18), 0, 5*(maxX/18) - 1, 2
+		},
+		"KCC",
+		&ButtonWidgetOpts{
+			frameColor: gocui.ColorGreen,
+		},
+		handler.SetConf(),
+	)
+
+	rpcInput := NewInputWidget(
+		"endpoint",
+		"Endpoint",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 0, 3, maxX/3 - 1 - 1, 5
+		},
+		nil,
+		handler.InputEndpoint(),
+	)
+
+	gasPriceInput := NewInputWidget(
+		"gasprice",
+		"Gas Price",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 0, 6, maxX/6 - 2, 8
+		},
+		nil,
+		handler.InputGasPrice(),
+	)
+
+	gasLimitInput := NewInputWidget(
+		"gaslimit",
+		"Gas Limit",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return maxX / 6, 6, maxX/3 - 2, 8
+		},
+		nil,
+		handler.InputGasPrice(),
+	)
+
+	privateKeyInput := NewInputWidget(
+		"privatekey",
+		"Private Key",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 0, 9, maxX/3 - 2, 11
+		},
+		nil,
+		handler.InputPrivateKey(),
 	)
 
 	searchPoolsButton := NewButtonWidget(
@@ -88,23 +159,40 @@ func setLayout(g *gocui.Gui) {
 		},
 		"Search for pools",
 		&ButtonWidgetOpts{
-			FrameColor: gocui.ColorBlue,
+			frameColor: gocui.ColorBlue,
 		},
-		getPools(),
+		handler.GetPools(),
 	)
+
 	pools := NewPoolWidget(
 		"pools",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, maxY := g.Size()
-			return maxX / 3, 3, 2*(maxX/3) - 1, maxY/3 - 1
+			y1 := maxY/3 - 1
+			if y1 < 11 {
+				y1 = 11
+			}
+			return maxX / 3, 3, 2*(maxX/3) - 1, y1
 		},
 	)
 
-	g.SetManager(ethButton, bscButton, maticButton, searchPoolsButton, pools)
+	g.SetManager(
+		ethButton,
+		bscButton,
+		maticButton,
+		ftmButton,
+		kccButton,
+		rpcInput,
+		gasPriceInput,
+		gasLimitInput,
+		privateKeyInput,
+		searchPoolsButton,
+		pools,
+	)
 }
 
 func setKeybindings(g *gocui.Gui) error {
-	err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit)
+	err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, handler.Quit)
 	if err != nil {
 		return err
 	}
@@ -174,8 +262,9 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 
-		v.FrameColor = w.opts.FrameColor
-		v.FgColor = w.opts.FgColor
+		v.FrameColor = w.opts.frameColor
+		v.FgColor = w.opts.fgColor
+
 		if _, err := g.SetCurrentView(w.name); err != nil {
 			return err
 		}
@@ -183,7 +272,7 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 			return err
 		}
 		text := w.label
-		if w.opts.TextCentered {
+		if w.opts.textCentered {
 			text = centerText(w.label, x1-x0)
 		}
 
@@ -192,24 +281,45 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func centerText(text string, lenght int) string {
-	if len(text) >= lenght {
-		return text
+func NewInputWidget(name, title string, getView func(*gocui.Gui) (int, int, int, int), opts *InputWidgetOpts, handler func(g *gocui.Gui, v *gocui.View) error) *InputWidget {
+
+	if opts == nil {
+		opts = &InputWidgetOpts{}
 	}
 
-	textRune := []rune(text)
-	whitespaces := (lenght - len(text)) / 2
-	whitespace := " "
-	for i := 0; i < whitespaces-1; i++ {
-		textRune = append([]rune(whitespace), textRune...)
+	return &InputWidget{
+		name:    name,
+		title:   title,
+		getView: getView,
+		opts:    opts,
+		handler: handler,
 	}
-
-	return string(textRune)
 }
 
-func quit(g *gocui.Gui, v *gocui.View) error {
-	close(donePoolFeed)
-	return gocui.ErrQuit
+func (w *InputWidget) Layout(g *gocui.Gui) error {
+	x0, y0, x1, y1 := w.getView(g)
+
+	v, err := g.SetView(w.name, x0, y0, x1, y1, 0)
+	if err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		v.Title = w.title
+		v.Editable = true
+
+		v.FrameColor = w.opts.frameColor
+		v.FgColor = w.opts.fgColor
+
+		if _, err := g.SetCurrentView(w.name); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
+			return err
+		}
+
+	}
+	return nil
 }
 
 /* func toggleButton(g *gocui.Gui, v *gocui.View) error {
@@ -221,19 +331,13 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 	return err
 } */
 
-func getPools() func(g *gocui.Gui, v *gocui.View) error {
-	return func(g *gocui.Gui, v *gocui.View) error {
-		return nil
-	}
-}
-
 func updatePools(g *gocui.Gui) {
 	defer wg.Done()
 	ticker := time.NewTicker(time.Second * 1)
 	i := 0
 	for {
 		select {
-		case <-donePoolFeed:
+		case <-handler.DonePoolFeed:
 			return
 		case <-ticker.C:
 			/* out, err := g.View("pools")

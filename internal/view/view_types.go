@@ -16,7 +16,19 @@ type ButtonWidget struct {
 }
 
 type ButtonWidgetOpts struct {
-	FrameColor   gocui.Attribute
-	FgColor      gocui.Attribute
-	TextCentered bool
+	frameColor   gocui.Attribute
+	fgColor      gocui.Attribute
+	textCentered bool
+}
+
+type InputWidget struct {
+	name    string
+	title   string
+	getView func(*gocui.Gui) (int, int, int, int)
+	opts    *InputWidgetOpts
+	handler func(g *gocui.Gui, v *gocui.View) error
+}
+type InputWidgetOpts struct {
+	frameColor gocui.Attribute
+	fgColor    gocui.Attribute
 }

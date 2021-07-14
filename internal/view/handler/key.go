@@ -2,6 +2,10 @@ package handler
 
 import "github.com/awesome-gocui/gocui"
 
+var (
+	DonePoolFeed = make(chan struct{})
+)
+
 func CursorDown(g *gocui.Gui, v *gocui.View) error {
 	if v != nil {
 		/* cx, cy := v.Cursor()
@@ -28,4 +32,9 @@ func CursorUp(g *gocui.Gui, v *gocui.View) error {
 		v.MoveCursor(0, -1)
 	}
 	return nil
+}
+
+func Quit(g *gocui.Gui, v *gocui.View) error {
+	close(DonePoolFeed)
+	return gocui.ErrQuit
 }
