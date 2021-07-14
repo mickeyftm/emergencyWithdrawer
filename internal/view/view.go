@@ -30,6 +30,8 @@ func New() {
 		log.Panicln(err)
 	}
 
+	go handler.FeedLog(g)
+
 	wg.Add(1)
 	go updatePools(g)
 
@@ -168,12 +170,22 @@ func setLayout(g *gocui.Gui) {
 		"pools",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, maxY := g.Size()
-			y1 := maxY/3 - 1
+			y1 := maxY/2 - 1
 			if y1 < 11 {
 				y1 = 11
 			}
 			return maxX / 3, 3, 2*(maxX/3) - 1, y1
 		},
+	)
+
+	log := NewTextWidget(
+		"log",
+		"log",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, maxY := g.Size()
+			return maxX / 3, maxY / 2, maxX - 1, maxY - 1
+		},
+		nil,
 	)
 
 	g.SetManager(
@@ -188,6 +200,7 @@ func setLayout(g *gocui.Gui) {
 		privateKeyInput,
 		searchPoolsButton,
 		pools,
+		log,
 	)
 }
 
@@ -324,6 +337,40 @@ func (w *InputWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
 			return err
 		}
+
+	}
+	return nil
+}
+
+func NewTextWidget(name, title string, getView func(*gocui.Gui) (int, int, int, int), opts *TextWidgetOpts) *TextWidget {
+
+	if opts == nil {
+		opts = &TextWidgetOpts{}
+	}
+
+	return &TextWidget{
+		name:    name,
+		title:   title,
+		getView: getView,
+		opts:    opts,
+	}
+}
+
+func (w *TextWidget) Layout(g *gocui.Gui) error {
+	x0, y0, x1, y1 := w.getView(g)
+
+	v, err := g.SetView(w.name, x0, y0, x1, y1, 0)
+	if err != nil {
+		if !errors.Is(err, gocui.ErrUnknownView) {
+			return err
+		}
+
+		v.Title = w.title
+		v.Autoscroll = true
+
+		/* if _, err := g.SetCurrentView(w.name); err != nil {
+			return err
+		} */
 
 	}
 	return nil

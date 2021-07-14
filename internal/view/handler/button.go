@@ -52,14 +52,7 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		view := v.Name()
 
-		g.Update(func(g *gocui.Gui) error {
-			v, err := g.View("pools")
-			if err != nil {
-				return err
-			}
-			fmt.Fprintln(v, view)
-			return nil
-		})
+		msgLogChan <- fmt.Sprintf("set active network to %s\n", view)
 
 		var first bool
 
@@ -71,13 +64,13 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 			err = config.SetActiveConf(view)
 			if err != nil {
-				// TODO replace return err with write err to log, if return err hits here the code panics
-				return err
+				errLogChan <- err
+				return nil
 			}
 			cfg, err = config.GetActiveConf()
 			if err != nil {
-				// TODO replace return err with write err to log, if return err hits here the code panics
-				return err
+				errLogChan <- err
+				return nil
 			}
 			first = true
 		}

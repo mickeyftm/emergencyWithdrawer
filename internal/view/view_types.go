@@ -33,3 +33,13 @@ type InputWidgetOpts struct {
 	frameColor gocui.Attribute
 	fgColor    gocui.Attribute
 }
+
+type TextWidget struct {
+	name    string
+	title   string
+	getView func(*gocui.Gui) (int, int, int, int)
+	opts    *TextWidgetOpts
+}
+
+type TextWidgetOpts struct {
+}
