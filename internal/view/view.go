@@ -180,7 +180,7 @@ func setLayout(g *gocui.Gui) {
 
 	log := NewTextWidget(
 		"log",
-		"log",
+		"Log",
 		func(*gocui.Gui) (int, int, int, int) {
 			maxX, maxY := g.Size()
 			return maxX / 3, maxY / 2, maxX - 1, maxY - 1

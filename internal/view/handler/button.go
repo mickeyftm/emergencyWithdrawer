@@ -50,6 +50,12 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 			return nil
 		}
 
+		err := SetCurrentView(g, v)
+		if err != nil {
+			errLogChan <- err
+			return nil
+		}
+
 		view := v.Name()
 
 		msgLogChan <- fmt.Sprintf("set active network to %s\n", view)
