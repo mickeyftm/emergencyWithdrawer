@@ -21,6 +21,7 @@ func InputEndpoint() func(g *gocui.Gui, v *gocui.View) error {
 				v.FrameColor = gocui.ColorRed
 				return nil
 			})
+			return nil
 		}
 		g.Update(func(g *gocui.Gui) error {
 			v.FrameColor = gocui.ColorGreen
