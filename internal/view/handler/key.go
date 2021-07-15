@@ -1,6 +1,8 @@
 package handler
 
-import "github.com/awesome-gocui/gocui"
+import (
+	"github.com/awesome-gocui/gocui"
+)
 
 var (
 	DonePoolFeed = make(chan struct{})
@@ -35,4 +37,37 @@ func CursorUp(g *gocui.Gui, v *gocui.View) error {
 func Quit(g *gocui.Gui, v *gocui.View) error {
 	close(DonePoolFeed)
 	return gocui.ErrQuit
+}
+
+func ToggleInput(g *gocui.Gui, v *gocui.View) error {
+	var nextview string
+	if v != nil {
+		switch v.Name() {
+		case "endpoint":
+			nextview = "gasprice"
+		case "gasprice":
+			nextview = "gaslimit"
+		case "gaslimit":
+			nextview = "privatekey"
+		case "privatekey":
+			nextview = "masterchef"
+		case "masterchef":
+			nextview = "pool"
+		default:
+			nextview = "endpoint"
+		}
+	}
+	/* _, err := g.SetCurrentView(nextview)
+	return err */
+
+	v, err := g.View(nextview)
+	if err != nil {
+		return err
+	}
+
+	err = SetCurrentView(g, v)
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -14,16 +14,29 @@ func SetCurrentView(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	view := v.Name()
-
-	_, err := g.SetCurrentView(view)
-	if err != nil {
-		return err
+	var prevView string
+	prevV := g.CurrentView()
+	if prevV != nil {
+		prevView = prevV.Name()
 	}
 
-	err = cursorCtrl(g, v)
-	if err != nil {
-		return err
+	view := v.Name()
+	if prevView != view {
+
+		if prevV != nil {
+			prevV.TitleColor = gocui.ColorDefault
+		}
+
+		v.TitleColor = gocui.ColorCyan
+		_, err := g.SetCurrentView(view)
+		if err != nil {
+			return err
+		}
+
+		err = cursorCtrl(g, v)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -36,7 +49,7 @@ func cursorCtrl(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	switch view {
-	case "endpoint", "gasprice", "gaslimit", "privatekey":
+	case "endpoint", "gasprice", "gaslimit", "privatekey", "masterchef", "pool":
 		g.Cursor = true
 	default:
 		g.Cursor = false
@@ -58,7 +71,7 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		view := v.Name()
 
-		msgLogChan <- fmt.Sprintf("set active network to %s\n", view)
+		msgLogChan <- fmt.Sprintf("set active network to %s", view)
 
 		var first bool
 
@@ -118,7 +131,7 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				}
 
 				v.Clear()
-				fmt.Fprint(v, cfg.GasLimit)
+				fmt.Fprintf(v, "%d", cfg.GasLimit)
 
 				v, err = g.View("endpoint")
 				if err != nil {
@@ -136,50 +149,44 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				return err
 			}
 
-			go func(g *gocui.Gui, v *gocui.View) {
-				gas, err := client.Client.SuggestGasPrice(context.TODO())
-				if err != nil {
-					return
-				}
-				g.Update(func(g *gocui.Gui) error {
-					v, err := g.View("gasprice")
-					if err != nil {
-						return err
-					}
-
-					v.Clear()
-					fmt.Fprint(v, gas)
-
-					return nil
-				})
-			}(g, v)
+			go getSuggestedGasPrice(g, v)
 
 			return nil
+
 		} else if cfg.Name == view {
-			go func(g *gocui.Gui, v *gocui.View) {
-				gas, err := client.Client.SuggestGasPrice(context.TODO())
-				if err != nil {
-					return
-				}
-				g.Update(func(g *gocui.Gui) error {
-					v, err := g.View("gasprice")
-					if err != nil {
-						return err
-					}
-
-					v.Clear()
-					fmt.Fprint(v, gas)
-
-					return nil
-				})
-			}(g, v)
+			go getSuggestedGasPrice(g, v)
 		}
 
 		return nil
 	}
 }
 
+func getSuggestedGasPrice(g *gocui.Gui, v *gocui.View) {
+
+	gas, err := client.Client.SuggestGasPrice(context.TODO())
+	if err != nil {
+		return
+	}
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View("gasprice")
+		if err != nil {
+			return err
+		}
+
+		v.Clear()
+		fmt.Fprint(v, gas)
+
+		return nil
+	})
+}
+
 func GetPools() func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		return nil
+	}
+}
+
+func Withdraw() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}

@@ -71,3 +71,11 @@ func InputPrivateKey() func(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 }
+
+func InputMasterchef() func(g *gocui.Gui, v *gocui.View) error {
+	return func(g *gocui.Gui, v *gocui.View) error {
+		vbuf := v.ViewBuffer()
+		_ = vbuf
+		return nil
+	}
+}

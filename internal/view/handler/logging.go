@@ -20,7 +20,7 @@ func FeedLog(g *gocui.Gui) {
 				if err != nil {
 					return err
 				}
-				fmt.Fprint(v, "[info] ", log)
+				fmt.Fprintln(v, "[info]", log)
 				return nil
 			})
 		case log := <-errLogChan:
@@ -29,7 +29,7 @@ func FeedLog(g *gocui.Gui) {
 				if err != nil {
 					return err
 				}
-				fmt.Fprint(v, "[erro] ", log)
+				fmt.Fprintln(v, "[erro]", log)
 				return nil
 			})
 		}

@@ -38,6 +38,7 @@ type TextWidget struct {
 	name    string
 	title   string
 	getView func(*gocui.Gui) (int, int, int, int)
+	body    string
 	opts    *TextWidgetOpts
 }
 

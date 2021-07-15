@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	ErrSecretNotFound = "secret not found in keyring"
+	ErrSecretNotFound = "private key not found in keyring"
 
 	PrivateKey *ecdsa.PrivateKey
 )

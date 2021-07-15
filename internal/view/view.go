@@ -153,6 +153,28 @@ func setLayout(g *gocui.Gui) {
 		handler.InputPrivateKey(),
 	)
 
+	masterchefInput := NewInputWidget(
+		"masterchef",
+		"Masterchef",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 0, 12, maxX/3 - 2, 14
+		},
+		nil,
+		handler.InputMasterchef(),
+	)
+
+	poolInput := NewInputWidget(
+		"pool",
+		"Pool",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, _ := g.Size()
+			return 0, 15, maxX/3 - 2, 17
+		},
+		nil,
+		handler.InputMasterchef(),
+	)
+
 	searchPoolsButton := NewButtonWidget(
 		"searchPools",
 		func(*gocui.Gui) (int, int, int, int) {
@@ -181,7 +203,33 @@ func setLayout(g *gocui.Gui) {
 			maxX, maxY := g.Size()
 			return maxX / 3, maxY / 2, maxX - 1, maxY - 1
 		},
+		"",
 		nil,
+	)
+
+	info := NewTextWidget(
+		"info",
+		"Info",
+		func(*gocui.Gui) (int, int, int, int) {
+			maxX, maxY := g.Size()
+			return 2*(maxX/3) + 1, 0, maxX - 1, maxY/2 - 1
+		},
+		"",
+		nil,
+	)
+
+	withdrawButton := NewButtonWidget(
+		"withdraw",
+		func(*gocui.Gui) (int, int, int, int) {
+			/* maxX, _ := g.Size() */
+			return 11, 20, 22, 22
+		},
+		" WITHDRAW ",
+		&ButtonWidgetOpts{
+			frameColor: gocui.ColorRed,
+			frameRunes: []rune{'#', '#', '#', '#', '#', '#'},
+		},
+		handler.Withdraw(),
 	)
 
 	g.SetManager(
@@ -194,9 +242,13 @@ func setLayout(g *gocui.Gui) {
 		gasPriceInput,
 		gasLimitInput,
 		privateKeyInput,
+		masterchefInput,
+		poolInput,
 		searchPoolsButton,
 		pools,
 		log,
+		info,
+		withdrawButton,
 	)
 }
 
@@ -278,9 +330,6 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 		v.FrameColor = w.opts.frameColor
 		v.FgColor = w.opts.fgColor
 
-		if _, err := g.SetCurrentView(w.name); err != nil {
-			return err
-		}
 		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
 			return err
 		}
@@ -327,10 +376,11 @@ func (w *InputWidget) Layout(g *gocui.Gui) error {
 		v.FrameColor = w.opts.frameColor
 		v.FgColor = w.opts.fgColor
 
-		if _, err := g.SetCurrentView(w.name); err != nil {
+		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
 			return err
 		}
-		if err := g.SetKeybinding(w.name, gocui.KeyEnter, gocui.ModNone, w.handler); err != nil {
+
+		if err := g.SetKeybinding(w.name, gocui.KeyTab, gocui.ModNone, handler.ToggleInput); err != nil {
 			return err
 		}
 
@@ -338,7 +388,7 @@ func (w *InputWidget) Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func NewTextWidget(name, title string, getView func(*gocui.Gui) (int, int, int, int), opts *TextWidgetOpts) *TextWidget {
+func NewTextWidget(name, title string, getView func(*gocui.Gui) (int, int, int, int), body string, opts *TextWidgetOpts) *TextWidget {
 
 	if opts == nil {
 		opts = &TextWidgetOpts{}
@@ -349,6 +399,7 @@ func NewTextWidget(name, title string, getView func(*gocui.Gui) (int, int, int, 
 		title:   title,
 		getView: getView,
 		opts:    opts,
+		body:    body,
 	}
 }
 
@@ -364,22 +415,13 @@ func (w *TextWidget) Layout(g *gocui.Gui) error {
 		v.Title = w.title
 		v.Autoscroll = true
 
-		/* if _, err := g.SetCurrentView(w.name); err != nil {
-			return err
-		} */
+		if w.body != "" {
+			fmt.Fprint(v, w.body)
+		}
 
 	}
 	return nil
 }
-
-/* func toggleButton(g *gocui.Gui, v *gocui.View) error {
-	nextview := "butdown"
-	if v != nil && v.Name() == "butdown" {
-		nextview = "butup"
-	}
-	_, err := g.SetCurrentView(nextview)
-	return err
-} */
 
 func updatePools(g *gocui.Gui) {
 	defer wg.Done()

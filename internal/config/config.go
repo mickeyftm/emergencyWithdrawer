@@ -31,10 +31,10 @@ type activeConfig struct {
 }
 
 type config struct {
-	Endpoint   string  `json:"endpoint"`
-	GasPrice   float64 `json:"gasPrice"`
-	GasLimit   float64 `json:"gasLimit"`
-	PrivateKey string  `json:"-"`
+	Endpoint   string `json:"endpoint"`
+	GasPrice   int64  `json:"gasPrice"`
+	GasLimit   int64  `json:"gasLimit"`
+	PrivateKey string `json:"-"`
 }
 
 func SetActiveConf(net string) error {
@@ -63,27 +63,27 @@ const defaultConfig = `
 	"eth": {
 		"endpoint": "https://main-light.eth.linkpool.io",
 		"gasPrice": 0,
-		"gasLimit": 100000
+		"gasLimit": 10000000
 	},
 	"bsc": {
 		"endpoint": "https://bsc-dataseed.binance.org",
 		"gasPrice": 0,
-		"gasLimit": 100000
+		"gasLimit": 10000000
 	},
 	"matic": {
 		"endpoint": "https://rpc-mainnet.matic.quiknode.pro",
 		"gasPrice": 0,
-		"gasLimit": 100000
+		"gasLimit": 10000000
 	},
 	"ftm": {
 		"endpoint": "https://rpcapi.fantom.network",
 		"gasPrice": 0,
-		"gasLimit": 100000
+		"gasLimit": 10000000
 	},
 	"kcc": {
 		"endpoint": "https://rpc-mainnet.kcc.network",
 		"gasPrice": 0,
-		"gasLimit": 100000
+		"gasLimit": 10000000
 	}
 }
 `
