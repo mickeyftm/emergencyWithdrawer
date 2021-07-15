@@ -2,6 +2,7 @@ package client
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/alethio/web3-go/ethrpc"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -10,6 +11,7 @@ import (
 )
 
 var (
+	cm              sync.Mutex // protects the clients
 	Client          *ethclient.Client
 	ETHClient       *ethrpc.ETH
 	MulticallClient multicall.Multicall
@@ -28,6 +30,9 @@ var (
 )
 
 func Load(net string) error {
+	cm.Lock()
+	defer cm.Unlock()
+
 	err := config.SetActiveConf(net)
 	if err != nil {
 		return err
