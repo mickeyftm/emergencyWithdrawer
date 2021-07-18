@@ -55,13 +55,11 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		view := v.Name()
 
-		var first bool
 		cfg, err := config.GetActiveConf()
 		if err != nil {
 			if err.Error() != config.ErrNoActiveConf.Error() {
 				return err
 			}
-			first = true
 		}
 
 		var name string
@@ -69,54 +67,51 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 			name = cfg.Name
 		}
 
-		if name != view || first {
+		if name != "" {
+			markButtonUnselected(g, name)
+		}
 
-			if name != "" {
-				markButtonUnselected(g, name)
-			}
+		markButtonSelected(g, view)
 
-			markButtonSelected(g, view)
+		cfg, err = client.LoadAndGet(view)
+		if err != nil {
+			return err
+		}
 
-			cfg, err := client.LoadAndGet(view)
+		err = updateGasPrice(g, v)
+		if err != nil {
+			return err
+		}
+
+		g.Update(func(g *gocui.Gui) error {
+			v, err := g.View("gaslimit")
 			if err != nil {
 				return err
 			}
 
-			err = updateGasPrice(g, v)
+			v.Clear()
+			fmt.Fprintf(v, "%d", cfg.GasLimit)
+
+			v, err = g.View("endpoint")
 			if err != nil {
 				return err
 			}
 
-			g.Update(func(g *gocui.Gui) error {
-				v, err := g.View("gaslimit")
-				if err != nil {
-					return err
-				}
-
-				v.Clear()
-				fmt.Fprintf(v, "%d", cfg.GasLimit)
-
-				v, err = g.View("endpoint")
-				if err != nil {
-					return err
-				}
-
-				v.Clear()
-				fmt.Fprint(v, cfg.Endpoint)
-
-				return nil
-			})
-
-			err = updateEndpoint(g, cfg.Endpoint)
-			if err != nil {
-				return err
-			}
-
-			msgLogChan <- fmt.Sprintf("set active network to %s", view)
+			v.Clear()
+			v.FrameColor = gocui.ColorDefault
+			fmt.Fprint(v, cfg.Endpoint)
 
 			return nil
+		})
 
+		err = updateEndpoint(g, cfg.Endpoint)
+		if err != nil {
+			return err
 		}
+
+		msgLogChan <- fmt.Sprintf("set active network to %s", view)
+
+		return nil
 
 		return nil
 	}
