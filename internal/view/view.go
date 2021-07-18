@@ -4,15 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"sync"
-	"time"
 
 	"github.com/awesome-gocui/gocui"
 	"github.com/jon4hz/emergenyWithdrawer/internal/view/handler"
-)
-
-var (
-	wg sync.WaitGroup
 )
 
 func New() {
@@ -30,16 +24,11 @@ func New() {
 		log.Panicln(err)
 	}
 
-	go handler.FeedLog(g)
-
-	wg.Add(1)
-	go updatePools(g)
+	go handler.FeedLog(g, handler.GetMsgLogChan(), handler.GetWarnLogChan(), handler.GetErrLogChan())
 
 	if err := g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {
 		log.Panicln(err)
 	}
-
-	wg.Wait()
 }
 
 func setLayout(g *gocui.Gui) {
@@ -207,6 +196,7 @@ func setLayout(g *gocui.Gui) {
 		nil,
 	)
 
+	infoText := "Infos:\n\tAddress: \n\tMasterchef: \n\tPool ID: \nNetwork:\n\tEndpoint: \n\tGas Price: \n\tGas Limit: "
 	info := NewTextWidget(
 		"info",
 		"Info",
@@ -214,20 +204,20 @@ func setLayout(g *gocui.Gui) {
 			maxX, maxY := g.Size()
 			return 2*(maxX/3) + 1, 0, maxX - 1, maxY/2 - 1
 		},
-		"",
+		infoText,
 		nil,
 	)
 
 	withdrawButton := NewButtonWidget(
 		"withdraw",
 		func(*gocui.Gui) (int, int, int, int) {
-			/* maxX, _ := g.Size() */
-			return 11, 20, 22, 22
+			maxX, _ := g.Size()
+			_ = maxX
+			return maxX/6 - 11/2, 19, maxX/6 + 11/2 + 1, 21
 		},
 		" WITHDRAW ",
 		&ButtonWidgetOpts{
 			frameColor: gocui.ColorRed,
-			frameRunes: []rune{'#', '#', '#', '#', '#', '#'},
 		},
 		handler.Withdraw(),
 	)
@@ -336,12 +326,7 @@ func (w *ButtonWidget) Layout(g *gocui.Gui) error {
 		if err := g.SetKeybinding(w.name, gocui.MouseLeft, gocui.ModNone, w.handler); err != nil {
 			return err
 		}
-		text := w.label
-		if w.opts.textCentered {
-			text = centerText(w.label, x1-x0)
-		}
-
-		fmt.Fprint(v, text)
+		fmt.Fprint(v, w.label)
 	}
 	return nil
 }
@@ -421,31 +406,4 @@ func (w *TextWidget) Layout(g *gocui.Gui) error {
 
 	}
 	return nil
-}
-
-func updatePools(g *gocui.Gui) {
-	defer wg.Done()
-	ticker := time.NewTicker(time.Second * 1)
-	i := 0
-	for {
-		select {
-		case <-handler.DonePoolFeed:
-			return
-		case <-ticker.C:
-			/* g.Update(func(g *gocui.Gui) error {
-				v, err := g.View("pools")
-				if err != nil {
-					return err
-				}
-				fmt.Fprintln(v, i)
-				return nil
-			}) */
-			i++
-
-			if i == 10 {
-				ticker.Stop()
-			}
-		}
-
-	}
 }

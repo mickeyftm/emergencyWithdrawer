@@ -57,8 +57,6 @@ func ToggleInput(g *gocui.Gui, v *gocui.View) error {
 			nextview = "endpoint"
 		}
 	}
-	/* _, err := g.SetCurrentView(nextview)
-	return err */
 
 	v, err := g.View(nextview)
 	if err != nil {

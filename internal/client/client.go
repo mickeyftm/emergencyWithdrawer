@@ -30,8 +30,6 @@ var (
 )
 
 func Load(net string) error {
-	cm.Lock()
-	defer cm.Unlock()
 
 	err := config.SetActiveConf(net)
 	if err != nil {
@@ -41,6 +39,9 @@ func Load(net string) error {
 	if err != nil {
 		return err
 	}
+
+	cm.Lock()
+	defer cm.Unlock()
 
 	Client, err = ethclient.Dial(cfg.Endpoint)
 	if err != nil {
@@ -63,4 +64,71 @@ func Load(net string) error {
 	}
 
 	return nil
+}
+
+// Set sets the clients according to the activeConf
+func Set() error {
+	cm.Lock()
+	defer cm.Unlock()
+
+	config, err := config.GetActiveConf()
+	if err != nil {
+		return err
+	}
+
+	Client, err = ethclient.Dial(config.Endpoint)
+	if err != nil {
+		return err
+	}
+
+	ETHClient, err = ethrpc.NewWithDefaults(config.Endpoint)
+	if err != nil {
+		return err
+	}
+
+	MulticallClient, err = multicall.New(ETHClient, multicall.ContractAddress(multicallContract[config.Name]))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// LoadAndGet does the same as Load(net string) error but return the pointer from activeConfig
+func LoadAndGet(net string) (*config.ActiveConfig, error) {
+	err := config.SetActiveConf(net)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg, err := config.GetActiveConf()
+	if err != nil {
+		return nil, err
+	}
+
+	cm.Lock()
+	defer cm.Unlock()
+
+	Client, err = ethclient.Dial(cfg.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	ETHClient, err = ethrpc.NewWithDefaults(cfg.Endpoint)
+	if err != nil {
+		return nil, err
+	}
+
+	ctr, ok := multicallContract[net]
+	if !ok {
+		return nil, ErrNoMulticall
+	}
+
+	MulticallClient, err = multicall.New(ETHClient, multicall.ContractAddress(ctr))
+	if err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
+
 }

@@ -7,14 +7,15 @@ import (
 )
 
 var (
-	msgLogChan = make(chan string)
-	errLogChan = make(chan error)
+	msgLogChan  = make(chan string)
+	warnLogChan = make(chan string)
+	errLogChan  = make(chan error)
 )
 
-func FeedLog(g *gocui.Gui) {
+func FeedLog(g *gocui.Gui, msgLog <-chan string, warnLog <-chan string, errLog <-chan error) {
 	for {
 		select {
-		case log := <-msgLogChan:
+		case log := <-msgLog:
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("log")
 				if err != nil {
@@ -23,7 +24,16 @@ func FeedLog(g *gocui.Gui) {
 				fmt.Fprintln(v, "[info]", log)
 				return nil
 			})
-		case log := <-errLogChan:
+		case log := <-warnLog:
+			g.Update(func(g *gocui.Gui) error {
+				v, err := g.View("log")
+				if err != nil {
+					return err
+				}
+				fmt.Fprintln(v, "[warn]", log)
+				return nil
+			})
+		case log := <-errLog:
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("log")
 				if err != nil {
@@ -35,4 +45,19 @@ func FeedLog(g *gocui.Gui) {
 		}
 
 	}
+}
+
+// GetMsgLogChan returns the channel used to send messages to the log view
+func GetMsgLogChan() chan string {
+	return msgLogChan
+}
+
+// GetWarnLogChan returns the channel used to send warnings to the log view
+func GetWarnLogChan() chan string {
+	return warnLogChan
+}
+
+// GetErrLogChan returns the channel used to send errors to the log view
+func GetErrLogChan() chan error {
+	return errLogChan
 }

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/awesome-gocui/gocui"
@@ -42,21 +41,6 @@ func SetCurrentView(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func cursorCtrl(g *gocui.Gui, v *gocui.View) error {
-	var view string
-	if v != nil {
-		view = v.Name()
-	}
-
-	switch view {
-	case "endpoint", "gasprice", "gaslimit", "privatekey", "masterchef", "pool":
-		g.Cursor = true
-	default:
-		g.Cursor = false
-	}
-	return nil
-}
-
 func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		if v == nil {
@@ -71,58 +55,37 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		view := v.Name()
 
-		msgLogChan <- fmt.Sprintf("set active network to %s", view)
-
 		var first bool
-
 		cfg, err := config.GetActiveConf()
 		if err != nil {
 			if err.Error() != config.ErrNoActiveConf.Error() {
 				return err
 			}
-
-			err = config.SetActiveConf(view)
-			if err != nil {
-				errLogChan <- err
-				return nil
-			}
-			cfg, err = config.GetActiveConf()
-			if err != nil {
-				errLogChan <- err
-				return nil
-			}
 			first = true
 		}
 
-		if cfg.Name != view || first {
+		var name string
+		if cfg != nil {
+			name = cfg.Name
+		}
 
-			prevNet := cfg.Name
+		if name != view || first {
 
-			err := config.SetActiveConf(view)
+			if name != "" {
+				markButtonUnselected(g, name)
+			}
+
+			markButtonSelected(g, view)
+
+			cfg, err := client.LoadAndGet(view)
 			if err != nil {
 				return err
 			}
-			cfg, err = config.GetActiveConf()
+
+			err = updateGasPrice(g, v)
 			if err != nil {
 				return err
 			}
-
-			g.Update(func(g *gocui.Gui) error {
-				v, err := g.View(prevNet)
-				if err != nil {
-					return err
-				}
-				v.FrameRunes = []rune{}
-
-				v, err = g.View(view)
-				if err != nil {
-					return err
-				}
-
-				v.FrameRunes = []rune{'═', '║', '╔', '╗', '╚', '╝'}
-
-				return nil
-			})
 
 			g.Update(func(g *gocui.Gui) error {
 				v, err := g.View("gaslimit")
@@ -144,40 +107,19 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 				return nil
 			})
 
-			err = client.Load(view)
+			err = updateEndpoint(g, cfg.Endpoint)
 			if err != nil {
 				return err
 			}
 
-			go getSuggestedGasPrice(g, v)
+			msgLogChan <- fmt.Sprintf("set active network to %s", view)
 
 			return nil
 
-		} else if cfg.Name == view {
-			go getSuggestedGasPrice(g, v)
 		}
 
 		return nil
 	}
-}
-
-func getSuggestedGasPrice(g *gocui.Gui, v *gocui.View) {
-
-	gas, err := client.Client.SuggestGasPrice(context.TODO())
-	if err != nil {
-		return
-	}
-	g.Update(func(g *gocui.Gui) error {
-		v, err := g.View("gasprice")
-		if err != nil {
-			return err
-		}
-
-		v.Clear()
-		fmt.Fprint(v, gas)
-
-		return nil
-	})
 }
 
 func GetPools() func(g *gocui.Gui, v *gocui.View) error {
@@ -190,4 +132,26 @@ func Withdraw() func(g *gocui.Gui, v *gocui.View) error {
 	return func(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
+}
+
+func markButtonSelected(g *gocui.Gui, button string) {
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View(button)
+		if err != nil {
+			return err
+		}
+		v.FrameRunes = getSelectedFrameRunes()
+		return nil
+	})
+}
+
+func markButtonUnselected(g *gocui.Gui, button string) {
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View(button)
+		if err != nil {
+			return err
+		}
+		v.FrameRunes = getUnselectedFrameRunes()
+		return nil
+	})
 }

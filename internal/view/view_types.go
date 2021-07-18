@@ -16,10 +16,9 @@ type ButtonWidget struct {
 }
 
 type ButtonWidgetOpts struct {
-	frameColor   gocui.Attribute
-	fgColor      gocui.Attribute
-	frameRunes   []rune
-	textCentered bool
+	frameColor gocui.Attribute
+	fgColor    gocui.Attribute
+	frameRunes []rune
 }
 
 type InputWidget struct {
