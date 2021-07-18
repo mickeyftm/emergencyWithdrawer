@@ -112,8 +112,6 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 		msgLogChan <- fmt.Sprintf("set active network to %s", view)
 
 		return nil
-
-		return nil
 	}
 }
 
