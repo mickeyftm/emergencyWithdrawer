@@ -12,7 +12,7 @@ The CUI  helps you find the correct pool id and sends the transaction to withdra
 - Support for multiple chains
 
 ## Limitations
-Only farms using a masterchef contract with a `emergencyWithdraw(_pid uint256)` function are supported.
+Only farms using a masterchef contract with an `emergencyWithdraw(_pid uint256)` function are supported.
 
 ## Supported networks
 The following networks are supported
