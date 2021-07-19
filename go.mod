@@ -6,7 +6,7 @@ require (
 	github.com/alethio/web3-go v0.0.6
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/awesome-gocui/gocui v1.0.0
-	github.com/ethereum/go-ethereum v1.10.4
+	github.com/ethereum/go-ethereum v1.10.5
 	github.com/gdamore/tcell/v2 v2.3.11 // indirect
 	github.com/jon4hz/web3-multicall-go v0.0.17
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
