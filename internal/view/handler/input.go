@@ -152,11 +152,6 @@ func updateGasPrice(g *gocui.Gui, v *gocui.View) error {
 			price, _ := utils.Gwei2Eth(gasPrice).Float64()
 			fmt.Fprintf(v, "%.18f", price)
 
-			v, err = g.View("info")
-			if err != nil {
-				return err
-			}
-
 			return nil
 		})
 
