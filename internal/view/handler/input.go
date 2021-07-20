@@ -142,10 +142,8 @@ func updateGasPrice(g *gocui.Gui, v *gocui.View) error {
 		if err != nil {
 			return err
 		}
-	}
 
-	g.Update(func(g *gocui.Gui) error {
-		if !failed {
+		g.Update(func(g *gocui.Gui) error {
 			v, err := g.View("gasprice")
 			if err != nil {
 				return err
@@ -154,16 +152,15 @@ func updateGasPrice(g *gocui.Gui, v *gocui.View) error {
 			price, _ := utils.Gwei2Eth(gasPrice).Float64()
 			fmt.Fprintf(v, "%.18f", price)
 
+			v, err = g.View("info")
+			if err != nil {
+				return err
+			}
+
 			return nil
-		}
+		})
 
-		v.SetLine(6, fmt.Sprintf("\tGas Price: %s\n", "failed to get suggested gas price"))
-
-		logging.ErrChan <- errors.New("failed to get suggested gas price")
-
-		return nil
-	})
-
+	}
 	return nil
 }
 
