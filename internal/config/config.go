@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"math/big"
 	"sync"
 )
 
@@ -34,11 +35,10 @@ type ActiveConfig struct {
 }
 
 type config struct {
-	Endpoint   string `json:"endpoint"`
-	GasPrice   int64  `json:"gasPrice"`
-	GasLimit   int64  `json:"gasLimit"`
-	PrivateKey string `json:"-"`
-	TxExplorer string `json:"txExplorer"`
+	Endpoint   string   `json:"endpoint"`
+	GasPrice   *big.Int `json:"gasPrice"`
+	GasLimit   uint64   `json:"gasLimit"`
+	TxExplorer string   `json:"txExplorer"`
 }
 
 func SetActiveConf(net string) error {
@@ -76,6 +76,28 @@ func SetActiveEndpoint(endpoint string) error {
 		activeConf = &ActiveConfig{}
 	}
 	activeConf.config.Endpoint = endpoint
+	return nil
+}
+
+func SetActiveGasPrice(gasPrice *big.Int) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if activeConf == nil {
+		activeConf = &ActiveConfig{}
+	}
+	activeConf.config.GasPrice = gasPrice
+	return nil
+}
+
+func SetActiveGasLimit(gasLimit uint64) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	if activeConf == nil {
+		activeConf = &ActiveConfig{}
+	}
+	activeConf.config.GasLimit = gasLimit
 	return nil
 }
 

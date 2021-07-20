@@ -42,4 +42,9 @@ type TextWidget struct {
 }
 
 type TextWidgetOpts struct {
+	wrap       bool
+	editable   bool
+	highlight  bool
+	autoscroll bool
+	selBgColor gocui.Attribute
 }

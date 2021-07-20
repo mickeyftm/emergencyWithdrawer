@@ -2,10 +2,7 @@ package handler
 
 import (
 	"github.com/awesome-gocui/gocui"
-)
-
-var (
-	DonePoolFeed = make(chan struct{})
+	"github.com/jon4hz/emergenyWithdrawer/internal/utils"
 )
 
 func CursorDown(g *gocui.Gui, v *gocui.View) error {
@@ -35,7 +32,7 @@ func CursorUp(g *gocui.Gui, v *gocui.View) error {
 }
 
 func Quit(g *gocui.Gui, v *gocui.View) error {
-	close(DonePoolFeed)
+	utils.ExitHandler()
 	return gocui.ErrQuit
 }
 

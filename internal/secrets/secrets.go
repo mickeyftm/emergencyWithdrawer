@@ -2,92 +2,74 @@ package secrets
 
 import (
 	"crypto/ecdsa"
+	"errors"
+	"os/user"
+
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/zalando/go-keyring"
 )
 
 var (
-	ErrSecretNotFound = "private key not found in keyring"
+	ErrSecretNotFound = errors.New("private key not found in keyring")
+	ErrSecretIsNil    = errors.New("private key is nil")
 
-	PrivateKey *ecdsa.PrivateKey
+	privateKey *ecdsa.PrivateKey
+
+	username string
 )
 
-/* func init() {
+const (
+	service = "emergencyWithdrawer_privateKey"
+)
 
-}
-
-func Test() {
-	service := "emercenyWithdrawer_privateKey"
+func init() {
 	user, err := user.Current()
 	if err != nil {
-		log.Panic(err)
+		panic(err)
 	}
 
-	username := user.Username */
-/*
-	password := "test1"
+	username = user.Username
 
-	 err = keyring.Set(service, username, password)
-	if err != nil {
-		log.Fatal(err)
-	} */
+}
 
-/* 	var configurePrivateKey bool
+func GetPrivateKey() (*ecdsa.PrivateKey, error) {
+	if privateKey == nil {
+		var err error
+		privateKey, err = getPrivateKeyFromKeyring()
+		if err != nil {
+			return nil, err
+		}
+	}
+	return privateKey, nil
+}
+
+func getPrivateKeyFromKeyring() (*ecdsa.PrivateKey, error) {
 	secret, err := keyring.Get(service, username)
 	if err != nil {
-		if err.Error() != ErrSecretNotFound {
-			log.Fatal(err)
-		} else {
-
-			fmt.Print("No private key found. Would you like to set one? [Y/n] ")
-			err = nil
-			configurePrivateKey = getValidConfirmation()
-
-		}
+		return nil, err
 	}
-
-	if configurePrivateKey {
-
-		fmt.Print("Please enter your private key: ")
-
-		PrivateKey = getPrivateKey()
+	key, err := crypto.HexToECDSA(secret)
+	if err != nil {
+		return nil, err
 	}
-
-	_ = secret
-} */
-/*
-func getValidConfirmation() bool {
-	var answer string
-	invalid := true
-
-	for invalid {
-		fmt.Scanln(&answer)
-
-		confirm, err := helper.GetConfirmation(answer)
-		if err != nil {
-			fmt.Print("invalid input, try again: ")
-			continue
-		}
-
-		return confirm
-
-	}
-	return false
+	return key, nil
 }
 
-func getPrivateKey() *ecdsa.PrivateKey {
-	var answer string
-	invalid := true
-
-	for invalid {
-		fmt.Scanln(&answer)
-
-		privateKey, err := crypto.HexToECDSA(answer)
-		if err != nil {
-			fmt.Print("invalid input, try again: ")
-			continue
-		}
-
-		return privateKey
+func SetPrivateKeyString(key string) error {
+	var err error
+	privateKey, err = crypto.HexToECDSA(key)
+	if err != nil {
+		return err
 	}
+
+	err = storePrivateKeyInKeyring(key)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
-*/
+
+func storePrivateKeyInKeyring(key string) error {
+	return keyring.Set(service, username, key)
+}

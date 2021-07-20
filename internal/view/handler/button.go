@@ -6,6 +6,7 @@ import (
 	"github.com/awesome-gocui/gocui"
 	"github.com/jon4hz/emergenyWithdrawer/internal/client"
 	"github.com/jon4hz/emergenyWithdrawer/internal/config"
+	"github.com/jon4hz/emergenyWithdrawer/internal/logging"
 )
 
 func SetCurrentView(g *gocui.Gui, v *gocui.View) error {
@@ -49,7 +50,7 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 
 		err := SetCurrentView(g, v)
 		if err != nil {
-			errLogChan <- err
+			logging.ErrChan <- err
 			return nil
 		}
 
@@ -78,38 +79,27 @@ func SetConf() func(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 
-		err = updateGasPrice(g, v)
-		if err != nil {
-			return err
-		}
-
-		g.Update(func(g *gocui.Gui) error {
-			v, err := g.View("gaslimit")
-			if err != nil {
-				return err
-			}
-
-			v.Clear()
-			fmt.Fprintf(v, "%d", cfg.GasLimit)
-
-			v, err = g.View("endpoint")
-			if err != nil {
-				return err
-			}
-
-			v.Clear()
-			v.FrameColor = gocui.ColorDefault
-			fmt.Fprint(v, cfg.Endpoint)
-
-			return nil
-		})
-
 		err = updateEndpoint(g, cfg.Endpoint)
 		if err != nil {
 			return err
 		}
 
-		msgLogChan <- fmt.Sprintf("set active network to %s", view)
+		updateGasLimit(g, cfg.GasLimit)
+
+		g.Update(func(g *gocui.Gui) error {
+
+			for _, view := range []string{"endpoint", "gaslimit", "gasprice"} {
+				v, err = g.View(view)
+				if err != nil {
+					return err
+				}
+				v.FrameColor = gocui.ColorDefault
+			}
+
+			return nil
+		})
+
+		logging.InfoChan <- fmt.Sprintf("set active network to %s", view)
 
 		return nil
 	}

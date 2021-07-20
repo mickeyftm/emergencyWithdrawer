@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/awesome-gocui/gocui"
+	"github.com/jon4hz/emergenyWithdrawer/internal/logging"
 	"github.com/jon4hz/emergenyWithdrawer/internal/view/handler"
 )
 
@@ -24,7 +25,7 @@ func New() {
 		log.Panicln(err)
 	}
 
-	go handler.FeedLog(g, handler.GetMsgLogChan(), handler.GetWarnLogChan(), handler.GetErrLogChan())
+	go logging.FeedLog(g, logging.InfoChan, logging.WarnChan, logging.ErrChan, logging.StopChan)
 
 	if err := g.MainLoop(); err != nil && !errors.Is(err, gocui.ErrQuit) {
 		log.Panicln(err)
@@ -128,7 +129,7 @@ func setLayout(g *gocui.Gui) {
 			return maxX / 6, 6, maxX/3 - 2, 8
 		},
 		nil,
-		handler.InputGasPrice(),
+		handler.InputGasLimit(),
 	)
 
 	privateKeyInput := NewInputWidget(
@@ -193,7 +194,12 @@ func setLayout(g *gocui.Gui) {
 			return maxX / 3, maxY / 2, maxX - 1, maxY - 1
 		},
 		"",
-		nil,
+		&TextWidgetOpts{
+			wrap:       true,
+			editable:   false,
+			selBgColor: gocui.ColorYellow,
+			autoscroll: true,
+		},
 	)
 
 	infoText := "Infos:\n\tAddress: \n\tMasterchef: \n\tPool ID: \nNetwork:\n\tEndpoint: \n\tGas Price: \n\tGas Limit: "
@@ -375,10 +381,6 @@ func (w *InputWidget) Layout(g *gocui.Gui) error {
 
 func NewTextWidget(name, title string, getView func(*gocui.Gui) (int, int, int, int), body string, opts *TextWidgetOpts) *TextWidget {
 
-	if opts == nil {
-		opts = &TextWidgetOpts{}
-	}
-
 	return &TextWidget{
 		name:    name,
 		title:   title,
@@ -398,7 +400,14 @@ func (w *TextWidget) Layout(g *gocui.Gui) error {
 		}
 
 		v.Title = w.title
-		v.Autoscroll = true
+
+		if w.opts != nil {
+			v.Wrap = w.opts.wrap
+			v.Editable = w.opts.editable
+			v.SelBgColor = w.opts.selBgColor
+			v.Highlight = w.opts.highlight
+			v.Autoscroll = w.opts.autoscroll
+		}
 
 		if w.body != "" {
 			fmt.Fprint(v, w.body)
